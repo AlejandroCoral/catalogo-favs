@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Detalle</title>
+  <style>
+    body{font-family:Arial;margin:40px;background:#f5f5f5}
+    .card{background:#fff;padding:20px;border-radius:10px;max-width:700px;box-shadow:0 0 8px rgba(0,0,0,.08);margin-bottom:20px}
+    img{max-width:220px;border-radius:10px}
+    button{padding:10px 12px;cursor:pointer;margin-right:8px}
+    textarea{width:100%;padding:10px}
+    .comment{border-top:1px solid #eee;padding:10px 0}
+  </style>
+</head>
+<body>
+
+  <a href="./index.html">← Volver</a>
+
+  <div class="card">
+    <h2 id="title">Cargando...</h2>
+    <p id="desc"></p>
+    <b id="price"></b>
+    <div style="margin:12px 0;">
+      <img id="img" src="" alt="">
+    </div>
+
+    <div>
+      <button id="btnFav">⭐ Favorito</button>
+      <a href="./login.html" id="loginLink" style="display:none;">Inicia sesión para favoritos/comentarios</a>
+      <p id="favMsg"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Comentarios</h3>
+
+    <div id="commentBox">
+      <textarea id="content" maxlength="200" placeholder="Escribe un comentario (máx 200)"></textarea>
+      <button id="btnSend">Enviar comentario</button>
+      <p id="cmsg"></p>
+    </div>
+
+    <div id="comments"></div>
+  </div>
+
+<script type="module">
+  import { apiFetch, getToken } from "./app.js";
+
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+
+  const token = getToken();
+  if(!token){
+    document.getElementById("commentBox").style.display = "none";
+    document.getElementById("loginLink").style.display = "inline-block";
+  }
+
+  let isFav = false;
+
+  async function loadProduct(){
+    const p = await apiFetch(`/products/${id}`);
+    title.textContent = p.name;
+    desc.textContent = p.description || "";
+    price.textContent = `Precio: $${Number(p.price).toFixed(2)}`;
+    img.src = p.image_url || "";
+  }
+
+  async function loadComments(){
+    const list = await apiFetch(`/comments/${id}`); // público
+    const container = document.getElementById("comments");
+    if(!list || list.length === 0){
+      container.innerHTML = "<p>No hay comentarios aún.</p>";
+      return;
+    }
+    container.innerHTML = list.map(c => `
+      <div class="comment">
+        <b>${c.user?.name ?? "Usuario"}</b>
+        <div>${c.content}</div>
+      </div>
+    `).join("");
+  }
+
+  async function loadFavorites(){
+    if(!token) return;
+    const favs = await apiFetch("/favorites");
+    // asumimos que devuelve productos o items con product_id
+    isFav = favs.some(f => (f.product_id == id) || (f.id == id) || (f.product?.id == id));
+    btnFav.textContent = isFav ? "✅ Quitar favorito" : "⭐ Marcar favorito";
+  }
+
+  btnFav.addEventListener("click", async () => {
+    if(!token){
+      favMsg.textContent = "Debes iniciar sesión.";
+      return;
+    }
+
+    try{
+      if(!isFav){
+        await apiFetch("/favorites", { method:"POST", body: JSON.stringify({ product_id: Number(id) }) });
+        isFav = true;
+      }else{
+        await apiFetch(`/favorites/${id}`, { method:"DELETE" });
+        isFav = false;
+      }
+      btnFav.textContent = isFav ? "✅ Quitar favorito" : "⭐ Marcar favorito";
+      favMsg.textContent = "Listo ✅";
+    }catch(err){
+      favMsg.textContent = err.message;
+    }
+  });
+
+  btnSend?.addEventListener("click", async () => {
+    cmsg.textContent = "Enviando...";
+    try{
+      await apiFetch("/comments", {
+        method:"POST",
+        body: JSON.stringify({ product_id: Number(id), content: content.value })
+      });
+      content.value = "";
+      cmsg.textContent = "Comentario guardado ✅";
+      await loadComments();
+    }catch(err){
+      cmsg.textContent = err.message;
+    }
+  });
+
+  // init
+  if(!id){
+    document.body.innerHTML = "Falta id en la URL. Ej: product.html?id=1";
+  }else{
+    await loadProduct();
+    await loadComments();
+    await loadFavorites();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Login</title>
+  <style>
+    body{font-family:Arial;margin:40px;background:#f5f5f5}
+    .card{background:#fff;padding:20px;border-radius:10px;max-width:420px;box-shadow:0 0 8px rgba(0,0,0,.08)}
+    input,button{width:100%;padding:10px;margin:8px 0}
+    button{cursor:pointer}
+    a{display:inline-block;margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Iniciar sesión</h2>
+
+    <form id="form">
+      <input id="email" type="email" placeholder="Email" required>
+      <input id="password" type="password" placeholder="Contraseña" required>
+      <button type="submit">Entrar</button>
+    </form>
+
+    <p id="msg"></p>
+    <a href="./index.html">Volver al catálogo</a>
+  </div>
+
+  <script type="module">
+    import { login } from "./app.js";
+
+    const form = document.getElementById("form");
+    const msg = document.getElementById("msg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "Ingresando...";
+
+      try{
+        await login(email.value, password.value);
+        msg.textContent = "Login OK ✅";
+        window.location.href = "./index.html";
+      }catch(err){
+        msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

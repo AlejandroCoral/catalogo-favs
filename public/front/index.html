@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<title>Mini Catálogo</title>
+
+<style>
+body{
+    font-family: Arial;
+    margin:40px;
+    background:#f5f5f5;
+}
+
+h1{
+    color:#333;
+}
+
+.product{
+    background:white;
+    padding:15px;
+    margin:10px 0;
+    border-radius:8px;
+    box-shadow:0 0 5px rgba(0,0,0,0.1);
+}
+
+img{
+    max-width:120px;
+}
+
+button{
+    padding:8px 12px;
+    margin-top:10px;
+    cursor:pointer;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Mini Catálogo de Productos</h1>
+
+<!-- NUEVA BARRA DE NAVEGACIÓN -->
+<p>
+<a href="login.html">Iniciar sesión</a> |
+<a href="register.html">Registrarse</a> |
+<a href="favorites.html">Mis favoritos</a>
+</p>
+
+<hr>
+
+<h2>Frase aleatoria de Chuck Norris</h2>
+<p id="joke">Cargando frase...</p>
+
+<hr>
+
+<h2>Productos</h2>
+
+<button onclick="loadProducts()">Cargar productos</button>
+
+<div id="products"></div>
+
+
+<script>
+
+const API = "http://127.0.0.1:8000/api";
+
+/* ===========================
+   API EXTERNA CHUCK NORRIS
+   =========================== */
+
+fetch("https://api.chucknorris.io/jokes/random")
+.then(res => res.json())
+.then(data => {
+
+    document.getElementById("joke").innerText = data.value;
+
+});
+
+
+/* ===========================
+   CARGAR PRODUCTOS
+   =========================== */
+
+function loadProducts(){
+
+fetch(API + "/products")
+
+.then(res => res.json())
+
+.then(products => {
+
+    const container = document.getElementById("products");
+
+    container.innerHTML = "";
+
+    products.forEach(p => {
+
+        container.innerHTML += `
+
+        <div class="product">
+
+        <h3>${p.name}</h3>
+
+        <p>${p.description}</p>
+
+        <strong>Precio: $${p.price}</strong>
+
+        <br>
+
+        <img src="${p.image_url}" />
+
+        <br><br>
+
+        <a href="product.html?id=${p.id}">
+        <button>Ver detalle</button>
+        </a>
+
+        </div>
+
+        `;
+
+    });
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
