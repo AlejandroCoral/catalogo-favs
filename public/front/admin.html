@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Panel Admin</title>
+</head>
+<body>
+  <h1>Panel Admin - Usuarios</h1>
+
+
+<h2>Crear nuevo usuario</h2>
+
+<form id="createUserForm">
+  <input type="text" id="newName" placeholder="Nombre" required>
+  <input type="email" id="newEmail" placeholder="Correo" required>
+  <input type="password" id="newPass" placeholder="Contraseña" required>
+  <input type="password" id="newPass2" placeholder="Confirmar contraseña" required>
+  <button type="submit">Crear usuario</button>
+</form>
+
+<p id="createMsg"></p>
+
+<hr>
+
+
+  <p><a href="index.html">Volver al catálogo</a></p>
+
+  <button id="logoutBtn" type="button">Cerrar sesión</button>
+
+  <div id="users">Cargando...</div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

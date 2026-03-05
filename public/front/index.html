@@ -46,6 +46,9 @@ button{
 <a href="login.html">Iniciar sesión</a> |
 <a href="register.html">Registrarse</a> |
 <a href="favorites.html">Mis favoritos</a>
+<button id="logoutBtn" type="button">Cerrar sesión</button>
+<a id="adminLink" href="admin.html" style="display:none;">Panel Admin</a>
+<button id="newProductBtn" type="button" style="display:none;">+ Nuevo producto</button>
 </p>
 
 <hr>
@@ -63,70 +66,208 @@ button{
 
 
 <script>
-
 const API = "http://127.0.0.1:8000/api";
+let IS_ADMIN = false;
 
 /* ===========================
    API EXTERNA CHUCK NORRIS
    =========================== */
-
 fetch("https://api.chucknorris.io/jokes/random")
-.then(res => res.json())
-.then(data => {
-
+  .then(res => res.json())
+  .then(data => {
     document.getElementById("joke").innerText = data.value;
+  });
 
-});
+/* ===========================
+   DETECTAR SI ES ADMIN
+   =========================== */
+async function detectAdmin() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
 
+  const res = await fetch(API + "/profile", {
+    headers: { Authorization: "Bearer " + token, Accept: "application/json" }
+  });
+
+  if (!res.ok) return;
+
+  const user = await res.json();
+  IS_ADMIN = !!user.is_admin;
+
+  if (IS_ADMIN) {
+    document.getElementById("adminLink").style.display = "inline";
+    document.getElementById("newProductBtn").style.display = "inline-block";
+  }
+}
 
 /* ===========================
    CARGAR PRODUCTOS
    =========================== */
+function loadProducts() {
+  fetch(API + "/products")
+    .then(res => res.json())
+    .then(products => {
+      const container = document.getElementById("products");
+      container.innerHTML = "";
 
-function loadProducts(){
-
-fetch(API + "/products")
-
-.then(res => res.json())
-
-.then(products => {
-
-    const container = document.getElementById("products");
-
-    container.innerHTML = "";
-
-    products.forEach(p => {
-
+      products.forEach(p => {
         container.innerHTML += `
+          <div class="product">
+            <h3>${p.name}</h3>
+            <p>${p.description}</p>
+            <strong>Precio: $${p.price}</strong>
+            <br>
+            <img src="${p.image_url}" />
+            <br><br>
 
-        <div class="product">
+            <a href="product.html?id=${p.id}">
+              <button>Ver detalle</button>
+            </a>
 
-        <h3>${p.name}</h3>
+            ${IS_ADMIN ? `
+              <button class="editBtn"
+                data-id="${p.id}"
+                data-name="${encodeURIComponent(p.name ?? '')}"
+                data-description="${encodeURIComponent(p.description ?? '')}"
+                data-price="${encodeURIComponent(p.price ?? '')}"
+                data-image_url="${encodeURIComponent(p.image_url ?? '')}"
+              >Editar</button>
 
-        <p>${p.description}</p>
-
-        <strong>Precio: $${p.price}</strong>
-
-        <br>
-
-        <img src="${p.image_url}" />
-
-        <br><br>
-
-        <a href="product.html?id=${p.id}">
-        <button>Ver detalle</button>
-        </a>
-
-        </div>
-
+              <button class="deleteBtn" data-id="${p.id}">Eliminar</button>
+            ` : ``}
+          </div>
         `;
-
+      });
     });
-
-});
-
 }
 
+/* ===========================
+   EVENTOS: Editar / Eliminar
+   =========================== */
+document.getElementById("products").addEventListener("click", async (e) => {
+  if (!IS_ADMIN) return;
+
+  // Eliminar
+  if (e.target.classList.contains("deleteBtn")) {
+    const id = e.target.dataset.id;
+    if (!confirm("¿Eliminar producto?")) return;
+
+    const token = localStorage.getItem("token");
+    const res = await fetch(API + "/products/" + id, {
+      method: "DELETE",
+      headers: { Authorization: "Bearer " + token, Accept: "application/json" }
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.message || "Error eliminando");
+      return;
+    }
+
+    loadProducts();
+  }
+
+  // Editar
+  if (e.target.classList.contains("editBtn")) {
+    const id = e.target.dataset.id;
+
+    const currentName = decodeURIComponent(e.target.dataset.name || "");
+    const currentDesc = decodeURIComponent(e.target.dataset.description || "");
+    const currentPrice = decodeURIComponent(e.target.dataset.price || "");
+    const currentImg = decodeURIComponent(e.target.dataset.image_url || "");
+
+    const newName = prompt("Nuevo nombre:", currentName);
+    if (newName === null) return;
+
+    const newDesc = prompt("Nueva descripción:", currentDesc);
+    if (newDesc === null) return;
+
+    const newPrice = prompt("Nuevo precio:", currentPrice);
+    if (newPrice === null) return;
+
+    const newImg = prompt("Nueva URL imagen (Firebase o pública):", currentImg);
+    if (newImg === null) return;
+
+    const token = localStorage.getItem("token");
+    const res = await fetch(API + "/products/" + id, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({
+        name: newName,
+        description: newDesc,
+        price: newPrice,
+        image_url: newImg
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Error actualizando");
+      return;
+    }
+
+    loadProducts();
+  }
+});
+
+/* ===========================
+   NUEVO PRODUCTO (admin)
+   =========================== */
+document.getElementById("newProductBtn").addEventListener("click", async () => {
+  if (!IS_ADMIN) return;
+
+  const name = prompt("Nombre del producto:");
+  if (!name) return;
+
+  const description = prompt("Descripción:");
+  if (description === null) return;
+
+  const price = prompt("Precio:");
+  if (price === null) return;
+
+  const image_url = prompt("URL de imagen (Firebase o pública):");
+  if (image_url === null) return;
+
+  const token = localStorage.getItem("token");
+  const res = await fetch(API + "/products", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({ name, description, price, image_url })
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    alert(data.message || "Error creando producto");
+    return;
+  }
+
+  loadProducts();
+});
+
+/* ===========================
+   LOGOUT
+   =========================== */
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.removeItem("token");
+  window.location.href = "login.html";
+});
+
+/* ===========================
+   INICIO
+   =========================== */
+(async () => {
+  await detectAdmin();
+  // Carga automática si quieres:
+  // loadProducts();
+})();
 </script>
 
 </body>

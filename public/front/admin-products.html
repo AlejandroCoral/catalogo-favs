@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin Productos</title>
+  <style>
+    body{font-family:Arial;margin:40px;background:#f5f5f5}
+    .card{background:#fff;padding:12px;margin:10px 0;border-radius:10px}
+    input, textarea{width:100%;padding:8px;margin:6px 0;box-sizing:border-box}
+    button{padding:8px 12px;cursor:pointer;margin-right:6px}
+    img{max-width:140px;display:block;margin-top:6px;border-radius:8px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .actions{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
+    .muted{color:#666;font-size:13px}
+    .ok{color:#0a7a2f}
+    .bad{color:#b00020}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1 style="margin:0;">Panel Admin - Productos</h1>
+      <p style="margin:6px 0 0;">
+        <a href="index.html">Volver al catálogo</a> |
+        <a href="admin.html">Panel Usuarios</a>
+      </p>
+    </div>
+
+    <div>
+      <button id="logoutBtn" type="button">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <h2>Crear nuevo producto</h2>
+  <form id="createProductForm" class="card">
+    <div class="row">
+      <div>
+        <label class="muted">Nombre</label>
+        <input id="c_name" placeholder="Ej: Gatorade 500ml" required />
+      </div>
+      <div>
+        <label class="muted">Precio</label>
+        <input id="c_price" type="number" step="0.01" placeholder="Ej: 1.50" required />
+      </div>
+    </div>
+
+    <label class="muted">Descripción</label>
+    <textarea id="c_description" placeholder="Descripción" required></textarea>
+
+    <label class="muted">URL de imagen (Firebase o cualquier URL pública)</label>
+    <input id="c_image_url" placeholder="https://firebasestorage.googleapis.com/..." />
+
+    <div class="actions">
+      <button type="submit">Crear</button>
+      <span id="createMsg" class="muted"></span>
+    </div>
+
+    <p class="muted" style="margin:6px 0 0;">
+      Tip: puedes crear sin URL y luego subir archivo desde cada producto.
+    </p>
+  </form>
+
+  <h2>Editar / Eliminar productos</h2>
+  <p class="muted">
+    Puedes actualizar datos, pegar un link de Firebase en <b>image_url</b>, o subir una imagen (usa tu endpoint <code>/products/{id}/image</code>).
+  </p>
+
+  <div id="products">Cargando...</div>
+
+  <script src="admin-products.js"></script>
+</body>
+</html>

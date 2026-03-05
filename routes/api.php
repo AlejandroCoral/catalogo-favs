@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\CommentController;
 
 use App\Http\Controllers\Api\ExternalController;
+use App\Http\Controllers\Api\UserController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +59,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/favorites', [FavoriteController::class, 'index']);
     Route::post('/favorites', [FavoriteController::class, 'store']);
     Route::delete('/favorites/{product_id}', [FavoriteController::class, 'destroy']);
+});
+
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/users', [UserController::class, 'index']);
+    Route::patch('/users/{id}/make-admin', [UserController::class, 'makeAdmin']);
+    Route::patch('/users/{id}/remove-admin', [UserController::class, 'removeAdmin']);
+
+});
+
+Route::middleware('auth:sanctum')->get('/profile', function (\Illuminate\Http\Request $request) {
+    return $request->user();
 });
 
 
