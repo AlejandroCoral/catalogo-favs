@@ -1,5 +1,7 @@
 // public/front/app.js
-const API = "http://127.0.0.1:8000/api";
+//const API = "http://127.0.0.1:8000/api";
+const API = "https://catalogo-favs-production.up.railway.app/api";
+
 
 export function saveToken(token) {
   localStorage.setItem("token", token);

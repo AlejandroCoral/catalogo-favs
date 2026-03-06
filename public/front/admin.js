@@ -1,4 +1,6 @@
-const API = "http://127.0.0.1:8000/api";
+//const API = "http://127.0.0.1:8000/api";
+const API = "https://catalogo-favs-production.up.railway.app/api";
+
 const token = localStorage.getItem("token");
 
 // Si no hay token, afuera

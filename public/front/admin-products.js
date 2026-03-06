@@ -1,7 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-const API = "http://127.0.0.1:8000/api";
+//const API = "http://127.0.0.1:8000/api";
+const API = "https://catalogo-favs-production.up.railway.app/api";
+
 const token = localStorage.getItem("token");
 
 if (!token) window.location.href = "login.html";
