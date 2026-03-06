@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Editar producto</title>
+
+<style>
+body{
+font-family:Arial;
+margin:40px;
+background:#f5f5f5;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:10px;
+max-width:500px;
+}
+
+input,textarea{
+width:100%;
+padding:8px;
+margin:8px 0;
+}
+
+button{
+padding:10px 15px;
+cursor:pointer;
+}
+
+img{
+max-width:150px;
+margin-top:10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Editar producto</h1>
+
+<div class="card">
+
+<label>Nombre</label>
+<input id="name">
+
+<label>Descripción</label>
+<textarea id="description"></textarea>
+
+<label>Precio</label>
+<input id="price" type="number" step="0.01">
+
+<p>Imagen actual</p>
+<img id="currentImage">
+
+<label>Cambiar imagen</label>
+<input type="file" id="imageFile">
+
+<br><br>
+
+<button id="saveBtn">Guardar cambios</button>
+<a href="index.html"><button>Cancelar</button></a>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
+
+const API="http://127.0.0.1:8000/api";
+
+/* firebase */
+
+const firebaseConfig={
+apiKey:"AIzaSyBduveofhdf5SU9c53bcjM7u8msitgNbU8",
+authDomain:"catalogo-favs.firebaseapp.com",
+projectId:"catalogo-favs",
+storageBucket:"catalogo-favs.firebasestorage.app",
+messagingSenderId:"1018674986767",
+appId:"1:1018674986767:web:39fa2feee97d9af6b4487a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const STORAGE=firebase.storage();
+
+/* obtener id */
+
+const params=new URLSearchParams(window.location.search);
+const id=params.get("id");
+
+/* cargar producto */
+
+async function loadProduct(){
+
+const res=await fetch(API+"/products/"+id);
+
+const p=await res.json();
+
+document.getElementById("name").value=p.name;
+document.getElementById("description").value=p.description;
+document.getElementById("price").value=p.price;
+
+if(p.image_url){
+document.getElementById("currentImage").src=p.image_url;
+}
+
+}
+
+loadProduct();
+
+/* subir imagen */
+
+async function uploadImage(file){
+
+const safeName=file.name.replace(/\s+/g,"_");
+
+const path=`products/${Date.now()}_${safeName}`;
+
+const ref=STORAGE.ref().child(path);
+
+await ref.put(file);
+
+return await ref.getDownloadURL();
+
+}
+
+/* guardar cambios */
+
+document.getElementById("saveBtn").addEventListener("click",async()=>{
+
+const name=document.getElementById("name").value;
+const description=document.getElementById("description").value;
+const price=document.getElementById("price").value;
+
+const file=document.getElementById("imageFile").files[0];
+
+let image_url=document.getElementById("currentImage").src;
+
+if(file){
+image_url=await uploadImage(file);
+}
+
+const token=localStorage.getItem("token");
+
+const res=await fetch(API+"/products/"+id,{
+method:"PUT",
+headers:{
+"Content-Type":"application/json",
+Accept:"application/json",
+Authorization:"Bearer "+token
+},
+body:JSON.stringify({
+name,
+description,
+price,
+image_url
+})
+});
+
+const data=await res.json();
+
+if(!res.ok){
+alert(data.message||"Error actualizando");
+return;
+}
+
+alert("Producto actualizado");
+
+window.location.href="index.html";
+
+});
+
+</script>
+
+</body>
+</html>
