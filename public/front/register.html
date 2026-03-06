@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Registro</title>
+
+  <!-- Aquí se conecta el CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
 <form id="registerForm">
   <input type="text" id="name" placeholder="Nombre" required>
   <input type="email" id="email" placeholder="Correo" required>
@@ -11,7 +25,6 @@
 <script>
 //const API = "http://127.0.0.1:8000/api";
 const API = "https://catalogo-favs-production.up.railway.app/api";
-
 
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -39,10 +52,12 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     return;
   }
 
-  // Si tu backend devuelve token:
   if (data.token) localStorage.setItem("token", data.token);
 
   document.getElementById("msg").innerText = "Registro exitoso ✅";
-  window.location.href = "login.html"; // o directo a index.html si ya guardaste token
+  window.location.href = "login.html";
 });
 </script>
+
+</body>
+</html>
