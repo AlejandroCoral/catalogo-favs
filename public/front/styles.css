@@ -268,15 +268,12 @@ a:hover{
 
 #users > div{
     background: #f8fafc;
-    color: #1e293b;
+    color: #1e293b !important;
     padding: 16px;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-#users > div,
-#users > div p,
-#users > div span,
-#users > div strong{
-    color: #1e293b;
+#users > div *{
+    color: #1e293b !important;
 }
