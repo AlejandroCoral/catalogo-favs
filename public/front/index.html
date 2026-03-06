@@ -64,10 +64,54 @@ button{
 
 <div id="products"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 const API = "http://127.0.0.1:8000/api";
+
+
+// ===== Firebase (Storage) =====
+// ⚠️ Pega aquí TU firebaseConfig (Firebase Console → Project settings → Your apps → SDK config)
+const firebaseConfig = {
+  apiKey: "AIzaSyBduveofhdf5SU9c53bcjM7u8msitgNbU8",
+  authDomain: "catalogo-favs.firebaseapp.com",
+  projectId: "catalogo-favs",
+  storageBucket: "catalogo-favs.firebasestorage.app",
+  messagingSenderId: "1018674986767",
+  appId: "1:1018674986767:web:39fa2feee97d9af6b4487a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const FB_STORAGE = firebase.storage();
+
+// Sube un archivo a Firebase y devuelve la URL pública
+async function uploadImageToFirebase(file) {
+  const safeName = file.name.replace(/\s+/g, "_");
+  const path = `products/${Date.now()}_${safeName}`;
+  const ref = FB_STORAGE.ref().child(path);
+
+  await ref.put(file);
+  const url = await ref.getDownloadURL();
+  return url;
+}
+
+// Abre selector de archivo y devuelve el File (o null si cancelan)
+function pickImageFile() {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = () => resolve(input.files?.[0] || null);
+    input.click();
+  });
+}
+
+
 let IS_ADMIN = false;
+
+
+
 
 /* ===========================
    API EXTERNA CHUCK NORRIS
@@ -167,51 +211,71 @@ document.getElementById("products").addEventListener("click", async (e) => {
     loadProducts();
   }
 
-  // Editar
-  if (e.target.classList.contains("editBtn")) {
-    const id = e.target.dataset.id;
+// Editar
+if (e.target.classList.contains("editBtn")) {
+  const id = e.target.dataset.id;
 
-    const currentName = decodeURIComponent(e.target.dataset.name || "");
-    const currentDesc = decodeURIComponent(e.target.dataset.description || "");
-    const currentPrice = decodeURIComponent(e.target.dataset.price || "");
-    const currentImg = decodeURIComponent(e.target.dataset.image_url || "");
+  const currentName = decodeURIComponent(e.target.dataset.name || "");
+  const currentDesc = decodeURIComponent(e.target.dataset.description || "");
+  const currentPrice = decodeURIComponent(e.target.dataset.price || "");
+  const currentImg = decodeURIComponent(e.target.dataset.image_url || "");
 
-    const newName = prompt("Nuevo nombre:", currentName);
-    if (newName === null) return;
+  const newName = prompt("Nuevo nombre:", currentName);
+  if (newName === null) return;
 
-    const newDesc = prompt("Nueva descripción:", currentDesc);
-    if (newDesc === null) return;
+  const newDesc = prompt("Nueva descripción:", currentDesc);
+  if (newDesc === null) return;
 
-    const newPrice = prompt("Nuevo precio:", currentPrice);
-    if (newPrice === null) return;
+  const newPrice = prompt("Nuevo precio:", currentPrice);
+  if (newPrice === null) return;
 
-    const newImg = prompt("Nueva URL imagen (Firebase o pública):", currentImg);
-    if (newImg === null) return;
+  let newImg = currentImg;
 
-    const token = localStorage.getItem("token");
-    const res = await fetch(API + "/products/" + id, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({
-        name: newName,
-        description: newDesc,
-        price: newPrice,
-        image_url: newImg
-      })
-    });
+  // Preguntar si quiere cambiar imagen
+  const changeImage = confirm("¿Quieres cambiar la imagen?");
+  if (changeImage) {
 
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.message || "Error actualizando");
+    const file = await pickImageFile();
+    if (!file) {
+      alert("No seleccionaste imagen");
       return;
     }
 
-    loadProducts();
+    try {
+      newImg = await uploadImageToFirebase(file);
+    } catch (error) {
+      console.error(error);
+      alert("Error subiendo imagen a Firebase");
+      return;
+    }
   }
+
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(API + "/products/" + id, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      Authorization: "Bearer " + token
+    },
+    body: JSON.stringify({
+      name: newName,
+      description: newDesc,
+      price: newPrice,
+      image_url: newImg
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert(data.message || "Error actualizando");
+    return;
+  }
+
+  loadProducts();
+}
 });
 
 /* ===========================
@@ -229,9 +293,20 @@ document.getElementById("newProductBtn").addEventListener("click", async () => {
   const price = prompt("Precio:");
   if (price === null) return;
 
-  const image_url = prompt("URL de imagen (Firebase o pública):");
-  if (image_url === null) return;
+  // Elegir imagen
+  const file = await pickImageFile();
+  if (!file) return alert("No seleccionaste imagen");
 
+  // Subir a Firebase
+  let image_url = "";
+  try {
+    image_url = await uploadImageToFirebase(file);
+  } catch (e) {
+    console.error(e);
+    return alert("Error subiendo imagen a Firebase");
+  }
+
+  // Guardar producto en Laravel
   const token = localStorage.getItem("token");
   const res = await fetch(API + "/products", {
     method: "POST",

@@ -55,17 +55,15 @@ async function loadProducts() {
         <label class="muted">Descripción</label>
         <textarea name="description" required>${escapeHtml(p.description)}</textarea>
 
-        <label class="muted">image_url (pega URL Firebase o pública)</label>
-        <input name="image_url" value="${escapeHtml(p.image_url)}" placeholder="https://firebasestorage..." />
+        <label class="muted">Imagen actual</label>
+        ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" alt="img">` : `<p class="muted">Sin imagen</p>`}
 
-        ${p.image_url ? `<img src="${p.image_url}" alt="img">` : `<p class="muted">Sin imagen</p>`}
-
-        <label class="muted">Subir imagen (archivo) (POST /products/{id}/image)</label>
+        <label class="muted">Cambiar imagen (archivo) — Laravel → Firebase</label>
         <input type="file" name="image_file" accept="image/*" />
 
         <div class="actions">
           <button type="button" onclick="updateProduct(${p.id}, this)">Guardar cambios</button>
-          <button type="button" onclick="uploadImage(${p.id}, this)">Subir imagen</button>
+          <button type="button" onclick="uploadImage(${p.id}, this)">Subir nueva imagen</button>
           <button type="button" onclick="deleteProduct(${p.id})">Eliminar</button>
           <span class="msg muted"></span>
         </div>
@@ -165,38 +163,41 @@ async function deleteProduct(id) {
 }
 
 // Crear producto
-document.getElementById("createProductForm").addEventListener("submit", async (e) => {
+const form = document.getElementById("createProductForm");
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const payload = {
-    name: document.getElementById("c_name").value,
-    description: document.getElementById("c_description").value,
-    price: document.getElementById("c_price").value,
-    image_url: document.getElementById("c_image_url").value || null
-  };
+  const token = localStorage.getItem("token");
+  if (!token) return (window.location.href = "login.html");
+
+  const fd = new FormData();
+  fd.append("name", document.getElementById("c_name").value);
+  fd.append("description", document.getElementById("c_description").value);
+  fd.append("price", document.getElementById("c_price").value);
+
+  // ✅ input file correcto
+  const file = document.getElementById("c_image_file").files[0];
+  if (file) fd.append("image", file);
 
   const res = await fetch(API + "/products", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "Authorization": "Bearer " + token
+      Authorization: "Bearer " + token,
+      Accept: "application/json"
+      // ⚠️ NO pongas Content-Type con FormData
     },
-    body: JSON.stringify(payload)
+    body: fd
   });
 
   const data = await res.json();
-
-  const msg = document.getElementById("createMsg");
   if (!res.ok) {
-    msg.className = "bad";
-    msg.innerText = data.message || "Error creando";
+    alert(data.message || "Error creando");
     return;
   }
 
-  msg.className = "ok";
-  msg.innerText = "Producto creado ✅";
-  e.target.reset();
+  alert("Producto creado ✅");
+  form.reset();
   loadProducts();
 });
 
