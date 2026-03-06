@@ -1,0 +1,258 @@
+/* ===== RESET BÁSICO ===== */
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ===== ESTILO GENERAL ===== */
+
+body{
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #134e5e, #0f766e);
+    min-height: 100vh;
+    padding: 40px;
+    color: #f8fafc;
+    line-height: 1.5;
+}
+
+/* ===== TITULOS ===== */
+
+h1{
+    margin-bottom: 20px;
+    color: #f8fafc;
+    font-size: 3rem;
+}
+
+h2{
+    margin: 24px 0 14px 0;
+    color: #f8fafc;
+    font-size: 2rem;
+}
+
+/* ===== TEXTO GENERAL SOBRE FONDO OSCURO ===== */
+
+p{
+    color: #e2e8f0;
+    margin-bottom: 10px;
+}
+
+strong{
+    color: inherit;
+}
+
+/* ===== LINEAS DIVISORIAS ===== */
+
+hr{
+    border: none;
+    height: 1px;
+    background: rgba(255,255,255,0.35);
+    margin: 20px 0;
+}
+
+/* ===== LINKS DE NAVEGACIÓN ===== */
+
+.nav-link{
+    text-decoration: none;
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-right: 8px;
+    transition: 0.2s;
+}
+
+.nav-link:hover{
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* ===== CAJA DE BIENVENIDA ===== */
+
+#welcomeBox{
+    background: #f8fafc;
+    color: #1e293b;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+
+#welcomeBox strong,
+#welcomeBox span,
+#welcomeBox p{
+    color: #1e293b;
+}
+
+/* ===== CONTENEDOR DE PRODUCTOS ===== */
+
+#products{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-top: 16px;
+}
+
+/* ===== TARJETAS DE PRODUCTOS ===== */
+
+.product{
+    background: #f8fafc;
+    color: #1e293b;
+    padding: 20px;
+    margin: 0;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-height: 100%;
+}
+
+.product:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.24);
+}
+
+.product h3{
+    color: #0f172a;
+    margin-bottom: 6px;
+    font-size: 1.15rem;
+}
+
+.product p{
+    color: #334155;
+    margin-bottom: 4px;
+}
+
+.product strong{
+    color: #0f172a;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.product img{
+    max-width: 160px;
+    width: 100%;
+    height: auto;
+    margin-top: 10px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+}
+
+/* ===== BOTONES ===== */
+
+button{
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    padding: 9px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 8px;
+    transition: all 0.2s ease;
+}
+
+button:hover{
+    transform: scale(1.04);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+
+button.secondary{
+    background: linear-gradient(135deg, #36d1dc, #5b86e5);
+}
+
+/* ===== INPUTS Y TEXTAREA ===== */
+
+input,
+textarea{
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    font-size: 14px;
+    background: #ffffff;
+    color: #1e293b;
+}
+
+textarea{
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* ===== TARJETAS DE FORMULARIOS ===== */
+
+.card{
+    background: #f8fafc;
+    color: #1e293b;
+    padding: 22px;
+    border-radius: 16px;
+    max-width: 560px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+}
+
+.card label,
+.card p,
+.card strong,
+.card span,
+.card h2,
+.card h3{
+    color: #1e293b;
+}
+
+/* ===== MENSAJES ===== */
+
+.msg{
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.msg.ok{
+    color: #16a34a;
+}
+
+.msg.bad{
+    color: #dc2626;
+}
+
+.msg.muted{
+    color: #64748b;
+}
+
+/* ===== LINKS GENERALES ===== */
+
+a{
+    color: inherit;
+}
+
+a:hover{
+    opacity: 0.9;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 900px){
+    #products{
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px){
+    body{
+        padding: 20px;
+    }
+
+    h1{
+        font-size: 2.2rem;
+    }
+
+    h2{
+        font-size: 1.5rem;
+    }
+
+    .product img{
+        max-width: 120px;
+    }
+}
