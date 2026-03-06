@@ -35,9 +35,8 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric',
-            'image_url' => 'nullable|string'
+            'image_url' => 'nullable|url'
         ]);
-
         $product = Product::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -88,6 +87,7 @@ class ProductController extends Controller
     }
 
     // POST /api/products/{id}/image  (admin)
+    /*
     public function uploadImage(Request $request, $id)
     {
         $request->validate([
@@ -112,4 +112,5 @@ class ProductController extends Controller
             'image_url' => $url
         ]);
     }
+    */
 }

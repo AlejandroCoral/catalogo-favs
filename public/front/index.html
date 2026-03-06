@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 <meta charset="UTF-8">
 <title>Mini Catálogo</title>
@@ -34,14 +33,12 @@ button{
     cursor:pointer;
 }
 </style>
-
 </head>
 
 <body>
 
 <h1>Mini Catálogo de Productos</h1>
 
-<!-- NUEVA BARRA DE NAVEGACIÓN -->
 <p>
 <a href="login.html">Iniciar sesión</a> |
 <a href="register.html">Registrarse</a> |
@@ -64,15 +61,14 @@ button{
 
 <div id="products"></div>
 
+<input type="file" id="imagePicker" accept="image/*" style="display:none;">
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 const API = "http://127.0.0.1:8000/api";
 
-
-// ===== Firebase (Storage) =====
-// ⚠️ Pega aquí TU firebaseConfig (Firebase Console → Project settings → Your apps → SDK config)
 const firebaseConfig = {
   apiKey: "AIzaSyBduveofhdf5SU9c53bcjM7u8msitgNbU8",
   authDomain: "catalogo-favs.firebaseapp.com",
@@ -85,8 +81,17 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const FB_STORAGE = firebase.storage();
 
-// Sube un archivo a Firebase y devuelve la URL pública
+let IS_ADMIN = false;
+
 async function uploadImageToFirebase(file) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Solo se permiten imágenes");
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error("La imagen no debe superar 2 MB");
+  }
+
   const safeName = file.name.replace(/\s+/g, "_");
   const path = `products/${Date.now()}_${safeName}`;
   const ref = FB_STORAGE.ref().child(path);
@@ -96,35 +101,34 @@ async function uploadImageToFirebase(file) {
   return url;
 }
 
-// Abre selector de archivo y devuelve el File (o null si cancelan)
 function pickImageFile() {
   return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = () => resolve(input.files?.[0] || null);
+    const input = document.getElementById("imagePicker");
+
+    if (!input) {
+      resolve(null);
+      return;
+    }
+
+    input.value = "";
+
+    input.onchange = () => {
+      resolve(input.files && input.files[0] ? input.files[0] : null);
+    };
+
     input.click();
   });
 }
 
-
-let IS_ADMIN = false;
-
-
-
-
-/* ===========================
-   API EXTERNA CHUCK NORRIS
-   =========================== */
 fetch("https://api.chucknorris.io/jokes/random")
   .then(res => res.json())
   .then(data => {
     document.getElementById("joke").innerText = data.value;
+  })
+  .catch(() => {
+    document.getElementById("joke").innerText = "No se pudo cargar la frase.";
   });
 
-/* ===========================
-   DETECTAR SI ES ADMIN
-   =========================== */
 async function detectAdmin() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -144,9 +148,6 @@ async function detectAdmin() {
   }
 }
 
-/* ===========================
-   CARGAR PRODUCTOS
-   =========================== */
 function loadProducts() {
   fetch(API + "/products")
     .then(res => res.json())
@@ -155,17 +156,21 @@ function loadProducts() {
       container.innerHTML = "";
 
       products.forEach(p => {
+        const imageHtml = p.image_url
+          ? `<img src="${p.image_url}" alt="${p.name}">`
+          : `<p>Sin imagen</p>`;
+
         container.innerHTML += `
           <div class="product">
             <h3>${p.name}</h3>
             <p>${p.description}</p>
             <strong>Precio: $${p.price}</strong>
             <br>
-            <img src="${p.image_url}" />
+            ${imageHtml}
             <br><br>
 
             <a href="product.html?id=${p.id}">
-              <button>Ver detalle</button>
+              <button type="button">Ver detalle</button>
             </a>
 
             ${IS_ADMIN ? `
@@ -175,23 +180,23 @@ function loadProducts() {
                 data-description="${encodeURIComponent(p.description ?? '')}"
                 data-price="${encodeURIComponent(p.price ?? '')}"
                 data-image_url="${encodeURIComponent(p.image_url ?? '')}"
+                type="button"
               >Editar</button>
 
-              <button class="deleteBtn" data-id="${p.id}">Eliminar</button>
+              <button class="deleteBtn" data-id="${p.id}" type="button">Eliminar</button>
             ` : ``}
           </div>
         `;
       });
+    })
+    .catch(() => {
+      document.getElementById("products").innerHTML = "<p>Error cargando productos.</p>";
     });
 }
 
-/* ===========================
-   EVENTOS: Editar / Eliminar
-   =========================== */
 document.getElementById("products").addEventListener("click", async (e) => {
   if (!IS_ADMIN) return;
 
-  // Eliminar
   if (e.target.classList.contains("deleteBtn")) {
     const id = e.target.dataset.id;
     if (!confirm("¿Eliminar producto?")) return;
@@ -209,78 +214,72 @@ document.getElementById("products").addEventListener("click", async (e) => {
     }
 
     loadProducts();
-  }
-
-// Editar
-if (e.target.classList.contains("editBtn")) {
-  const id = e.target.dataset.id;
-
-  const currentName = decodeURIComponent(e.target.dataset.name || "");
-  const currentDesc = decodeURIComponent(e.target.dataset.description || "");
-  const currentPrice = decodeURIComponent(e.target.dataset.price || "");
-  const currentImg = decodeURIComponent(e.target.dataset.image_url || "");
-
-  const newName = prompt("Nuevo nombre:", currentName);
-  if (newName === null) return;
-
-  const newDesc = prompt("Nueva descripción:", currentDesc);
-  if (newDesc === null) return;
-
-  const newPrice = prompt("Nuevo precio:", currentPrice);
-  if (newPrice === null) return;
-
-  let newImg = currentImg;
-
-  // Preguntar si quiere cambiar imagen
-  const changeImage = confirm("¿Quieres cambiar la imagen?");
-  if (changeImage) {
-
-    const file = await pickImageFile();
-    if (!file) {
-      alert("No seleccionaste imagen");
-      return;
-    }
-
-    try {
-      newImg = await uploadImageToFirebase(file);
-    } catch (error) {
-      console.error(error);
-      alert("Error subiendo imagen a Firebase");
-      return;
-    }
-  }
-
-  const token = localStorage.getItem("token");
-
-  const res = await fetch(API + "/products/" + id, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({
-      name: newName,
-      description: newDesc,
-      price: newPrice,
-      image_url: newImg
-    })
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    alert(data.message || "Error actualizando");
     return;
   }
 
-  loadProducts();
-}
+  if (e.target.classList.contains("editBtn")) {
+    const id = e.target.dataset.id;
+
+    const currentName = decodeURIComponent(e.target.dataset.name || "");
+    const currentDesc = decodeURIComponent(e.target.dataset.description || "");
+    const currentPrice = decodeURIComponent(e.target.dataset.price || "");
+    const currentImg = decodeURIComponent(e.target.dataset.image_url || "");
+
+    const newName = prompt("Nuevo nombre:", currentName);
+    if (newName === null) return;
+
+    const newDesc = prompt("Nueva descripción:", currentDesc);
+    if (newDesc === null) return;
+
+    const newPrice = prompt("Nuevo precio:", currentPrice);
+    if (newPrice === null) return;
+
+    let newImg = currentImg;
+
+    const file = await pickImageFile();
+    if (file) {
+      if (!file) {
+        alert("No seleccionaste imagen");
+        return;
+      }
+
+      try {
+        newImg = await uploadImageToFirebase(file);
+      } catch (error) {
+        console.error(error);
+        alert(error.message || "Error subiendo imagen a Firebase");
+        return;
+      }
+    }
+
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(API + "/products/" + id, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({
+        name: newName,
+        description: newDesc,
+        price: newPrice,
+        image_url: newImg
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Error actualizando");
+      return;
+    }
+
+    loadProducts();
+  }
 });
 
-/* ===========================
-   NUEVO PRODUCTO (admin)
-   =========================== */
 document.getElementById("newProductBtn").addEventListener("click", async () => {
   if (!IS_ADMIN) return;
 
@@ -293,20 +292,21 @@ document.getElementById("newProductBtn").addEventListener("click", async () => {
   const price = prompt("Precio:");
   if (price === null) return;
 
-  // Elegir imagen
   const file = await pickImageFile();
-  if (!file) return alert("No seleccionaste imagen");
+  if (!file) {
+    alert("No seleccionaste imagen");
+    return;
+  }
 
-  // Subir a Firebase
   let image_url = "";
   try {
     image_url = await uploadImageToFirebase(file);
   } catch (e) {
     console.error(e);
-    return alert("Error subiendo imagen a Firebase");
+    alert(e.message || "Error subiendo imagen a Firebase");
+    return;
   }
 
-  // Guardar producto en Laravel
   const token = localStorage.getItem("token");
   const res = await fetch(API + "/products", {
     method: "POST",
@@ -327,21 +327,13 @@ document.getElementById("newProductBtn").addEventListener("click", async () => {
   loadProducts();
 });
 
-/* ===========================
-   LOGOUT
-   =========================== */
 document.getElementById("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem("token");
   window.location.href = "login.html";
 });
 
-/* ===========================
-   INICIO
-   =========================== */
 (async () => {
   await detectAdmin();
-  // Carga automática si quieres:
-  // loadProducts();
 })();
 </script>
 
